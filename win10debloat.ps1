@@ -20,21 +20,10 @@ Try{
 	Write-Host "winget is already installed."
 }
 Catch{
-	# winget is not installed. Install it from the Github release
-	Write-Host "winget is not found, installing it right now."
-
-	$asset = Invoke-RestMethod -Method Get -Uri 'https://api.github.com/repos/microsoft/winget-cli/releases/latest' | ForEach-Object assets | Where-Object name -like "*.msixbundle"
+	# winget is not installed. Install it from the file
+	Write-Host "Initializing winget..."
 	$output = $PSScriptRoot + "\winget-latest.appxbundle"
-	Write-Host "Downloading latest winget release"
-	Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $output
-
-	Write-Host "Installing the winget package"
 	Add-AppxPackage -Path $output
-
-    Write-Host "Cleanup winget install package"
-    if (Test-Path -Path $output) {
-        Remove-Item $output -Force -ErrorAction SilentlyContinue
-    }
 }
 Finally {
 	# Start installing the packages with winget
@@ -287,7 +276,7 @@ $PictureBox1                     = New-Object system.Windows.Forms.PictureBox
 $PictureBox1.width               = 330
 $PictureBox1.height              = 174
 $PictureBox1.location            = New-Object System.Drawing.Point(703,252)
-$PictureBox1.imageLocation       = "https://github.com/ChrisTitusTech/win10script/blob/master/titus-toolbox.png?raw=true"
+$PictureBox1.imageLocation       = $PSScriptRoot + "\titus-toolbox.png"
 $PictureBox1.SizeMode            = [System.Windows.Forms.PictureBoxSizeMode]::zoom
 $lightmode                       = New-Object system.Windows.Forms.Button
 $lightmode.text                  = "Light Mode"
@@ -558,14 +547,8 @@ $openshell.Add_Click({
 })
 
 $essentialtweaks.Add_Click({
-    Write-Host "Creating Restore Point incase something bad happens"
-    Enable-ComputerRestore -Drive "C:\"
-    Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
-
     Write-Host "Running O&O Shutup with Recommended Settings"
     Import-Module BitsTransfer
-    Start-BitsTransfer -Source "https://raw.githubusercontent.com/ChrisTitusTech/win10script/master/ooshutup10.cfg" -Destination ooshutup10.cfg
-    Start-BitsTransfer -Source "https://dl5.oo-software.com/files/ooshutup10/OOSU10.exe" -Destination OOSU10.exe
     ./OOSU10.exe ooshutup10.cfg /quiet
 
     Write-Host "Disabling Telemetry..."
@@ -685,8 +668,6 @@ $essentialtweaks.Add_Click({
         New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" | Out-Null
     }
     Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" -Name "PeopleBand" -Type DWord -Value 0
-    Write-Host "Showing all tray icons..."
-    Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "EnableAutoTray" -Type DWord -Value 0
     Write-Host "Enabling NumLock after startup..."
     If (!(Test-Path "HKU:")) {
         New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS | Out-Null
